@@ -12,7 +12,7 @@ prepare:
 	go get -v github.com/bigkevmcd/go-configparser
 
 binary:
-	go build -ldflags="-s -w -X main.buildVersion=${VERSION}" -o BackUploader
+	go build -ldflags="-s -w -X main.buildVersion=${VERSION} -X main.buildArch=${GOOS}-${GOARCH}" -o BackUploader
 
 compress:
 	upx -9 --brute output/linux-amd64/FonFon
