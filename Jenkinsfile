@@ -11,6 +11,7 @@ pipeline {
           steps {
             sh '''make prepare
 make build'''
+            archiveArtifacts(onlyIfSuccessful: true, artifacts: 'BackUploader', caseSensitive: true)
           }
         }
 
@@ -22,6 +23,7 @@ make build'''
           steps {
             sh '''make prepare
 make build'''
+            archiveArtifacts(artifacts: 'BackUploader', caseSensitive: true, onlyIfSuccessful: true)
           }
         }
 
@@ -33,6 +35,7 @@ make build'''
           steps {
             sh '''make prepare
 make build'''
+            archiveArtifacts(artifacts: 'BackUploader', caseSensitive: true, onlyIfSuccessful: true)
           }
         }
 
@@ -44,6 +47,7 @@ make build'''
           steps {
             sh '''make prepare
 make build'''
+            archiveArtifacts(artifacts: 'BackUploader', caseSensitive: true, onlyIfSuccessful: true)
           }
         }
 
@@ -55,6 +59,7 @@ make build'''
           steps {
             sh '''make prepare
 make build'''
+            archiveArtifacts(artifacts: 'BackUploader', caseSensitive: true, onlyIfSuccessful: true)
           }
         }
 
@@ -66,6 +71,7 @@ make build'''
           steps {
             sh '''make prepare
 make build'''
+            archiveArtifacts(caseSensitive: true, artifacts: 'BackUploader', onlyIfSuccessful: true)
           }
         }
 
