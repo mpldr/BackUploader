@@ -10,7 +10,7 @@ pipeline {
           }
           steps {
             sh '''make prepare
-make install'''
+make build'''
           }
         }
 
@@ -40,17 +40,6 @@ make build'''
           environment {
             GOOS = 'windows'
             GOARCH = 'amd64'
-          }
-          steps {
-            sh '''make prepare
-make build'''
-          }
-        }
-
-        stage('Windows32') {
-          environment {
-            GOOS = 'Windows'
-            GOARCH = '386'
           }
           steps {
             sh '''make prepare
