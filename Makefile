@@ -9,7 +9,6 @@ build: binary
 prepare:
 	go get -v golang.org/x/sync/semaphore
 	go get -v github.com/wsxiaoys/terminal
-	go get -v golang.org/x/sync
 	go get -v github.com/bigkevmcd/go-configparser
 
 binary:
