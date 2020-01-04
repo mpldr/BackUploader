@@ -6,6 +6,13 @@ buildrelease: build compress
 build: binary
 .PHONY: build
 
+jenkins:
+	@if [ ${GOOS} = "windows" ]; then\
+		go build -ldflags="-s -w -X main.buildVersion=${VERSION} -X main.buildArch=${GOOS}-${GOARCH}" -o BackUploader.${GOOS}.${GOARCH}.exe;\
+	else\
+		go build -ldflags="-s -w -X main.buildVersion=${VERSION} -X main.buildArch=${GOOS}-${GOARCH}" -o BackUploader.${GOOS}.${GOARCH};\
+	fi
+
 prepare:
 	go get -v golang.org/x/sync/semaphore
 	go get -v github.com/wsxiaoys/terminal
