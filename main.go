@@ -17,6 +17,7 @@ import (
 var (
 	Wg           sync.WaitGroup
 	buildVersion = "not built using Makefile, version unknown!"
+	buildArch    = "unknown"
 )
 
 func init() {
@@ -24,6 +25,15 @@ func init() {
 }
 
 func main() {
+	if os.Args[1] == "-v" {
+		fmt.Println("Backuploader Version", buildVersion)
+		if buildArch == "-" {
+			buildArch = "equal to compiling system"
+		}
+		fmt.Println("Architecture:", buildArch)
+		os.Exit(0)
+	}
+
 	// read and parse configuration
 	fmt.Print("Reading Config........")
 	conf, err := configparser.NewConfigParserFromFile("config.ini")
