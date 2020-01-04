@@ -7,7 +7,11 @@ build: binary
 .PHONY: build
 
 jenkins:
-	go build -ldflags="-s -w -X main.buildVersion=${VERSION} -X main.buildArch=${GOOS}-${GOARCH}" -o BackUploader.${GOOS}.${GOARCH}
+	@if [ ${GOOS} = "windows" ]; then\
+		go build -ldflags="-s -w -X main.buildVersion=${VERSION} -X main.buildArch=${GOOS}-${GOARCH}" -o BackUploader.${GOOS}.${GOARCH}.exe;\
+	else\
+		go build -ldflags="-s -w -X main.buildVersion=${VERSION} -X main.buildArch=${GOOS}-${GOARCH}" -o BackUploader.${GOOS}.${GOARCH};\
+	fi
 
 prepare:
 	go get -v golang.org/x/sync/semaphore
@@ -15,7 +19,7 @@ prepare:
 	go get -v github.com/bigkevmcd/go-configparser
 
 binary:
-	go build -ldflags="-s -w -X main.buildVersion=${VERSION}" -o BackUploader
+	go build -ldflags="-s -w -X main.buildVersion=${VERSION}"
 
 compress:
 	upx -9 --brute output/linux-amd64/FonFon
