@@ -1,61 +1,85 @@
 pipeline {
   agent any
   stages {
-    stage('Linux') {
+    stage('Linux64') {
       parallel {
-        stage('Linux') {
+        stage('Linux64') {
+          environment {
+            GOOS = 'linux'
+            GOARCH = 'amd64'
+          }
           steps {
-            sh 'export GOOS=linux'
+            sh '''make prepare
+make install'''
           }
         }
 
-        stage('Windows') {
+        stage('Linux32') {
+          environment {
+            GOOS = 'linux'
+            GOARCH = '386'
+          }
           steps {
-            sh 'export GOOS=windows'
+            sh '''make prepare
+make build'''
           }
         }
 
-        stage('MacOS') {
+        stage('LinuxARM') {
+          environment {
+            GOOS = 'linux'
+            GOARCH = 'arm'
+          }
           steps {
-            sh 'export GOOS=darwin'
+            sh '''make prepare
+make build'''
           }
         }
 
-      }
-    }
-
-    stage('64-bit') {
-      parallel {
-        stage('64-bit') {
+        stage('Windows64') {
+          environment {
+            GOOS = 'windows'
+            GOARCH = 'amd64'
+          }
           steps {
-            sh 'export GOARCH=amd64'
+            sh '''make prepare
+make build'''
           }
         }
 
-        stage('32-bit') {
+        stage('Windows32') {
+          environment {
+            GOOS = 'Windows'
+            GOARCH = '386'
+          }
           steps {
-            sh 'export GOARCH=386'
+            sh '''make prepare
+make build'''
           }
         }
 
-        stage('ARM') {
+        stage('OSX64') {
+          environment {
+            GOOS = 'darwin'
+            GOARCH = 'amd64'
+          }
           steps {
-            sh 'export GOARCH=arm'
+            sh '''make prepare
+make build'''
           }
         }
 
-      }
-    }
+        stage('OSX32') {
+          environment {
+            GOOS = 'darwin'
+            GOARCH = '386'
+          }
+          steps {
+            sh '''make prepare
+make build'''
+          }
+        }
 
-    stage('get dependencies') {
-      steps {
-        sh 'make prepare'
-      }
-    }
-
-    stage('Build') {
-      steps {
-        sh 'make build'
       }
     }
 
