@@ -6,10 +6,14 @@ buildrelease: build compress
 build: binary
 .PHONY: build
 
+prepare:
+	go get -v golang.org/x/sync/semaphore
+	go get -v github.com/wsxiaoys/terminal
+	go get -v golang.org/x/sync
+	go get -v github.com/bigkevmcd/go-configparser
+
 binary:
-	echo "building binary"
 	go build -ldflags="-s -w -X main.buildVersion=${VERSION}" -o BackUploader
 
 compress:
-	echo "compressing binary"
 	upx -9 --brute output/linux-amd64/FonFon
