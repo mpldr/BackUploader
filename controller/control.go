@@ -140,7 +140,9 @@ func packing(folder string, values [4]string) bool {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if _, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
+				if DebugEnabled {
+					log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
+				}
 				return false
 			}
 		} else {
@@ -148,7 +150,9 @@ func packing(folder string, values [4]string) bool {
 		}
 	}
 
-	log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
+	if DebugEnabled {
+		log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
+	}
 	return true
 }
 
@@ -168,7 +172,9 @@ func paring(folder string, values [4]string) bool {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if _, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
+				if DebugEnabled {
+					log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
+				}
 				return false
 			}
 		} else {
@@ -176,7 +182,9 @@ func paring(folder string, values [4]string) bool {
 		}
 	}
 
-	log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
+	if DebugEnabled {
+		log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
+	}
 	return true
 }
 
@@ -196,7 +204,9 @@ func uploading(folder string, values [4]string) bool {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if _, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
+				if DebugEnabled {
+					log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
+				}
 				return false
 			}
 		} else {
@@ -204,7 +214,9 @@ func uploading(folder string, values [4]string) bool {
 		}
 	}
 
-	log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
+	if DebugEnabled {
+		log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
+	}
 	return true
 }
 
