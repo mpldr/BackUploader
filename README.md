@@ -15,11 +15,11 @@ This Program is intended to Upload Offsite-Backups to a remote Location of your 
 
 - with the Git-Repo
 	- ```
-git clone https://github.com/poldi1405/BackUploader.git
-cd BackUploader
-go get ./...
-go build
-```
+		git clone https://github.com/poldi1405/BackUploader.git
+		cd BackUploader
+		go get ./...
+		go build
+		```
 - automatically build it
 	- `go install github.com/poldi1405/BackUploader`
 - Linux
