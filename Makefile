@@ -22,6 +22,3 @@ prepare:
 
 binary:
 	go build -ldflags="-s -w -X main.buildVersion=${VERSION} -X main.buildArch=${GOOS}-${GOARCH}"
-
-compress:
-	upx -9 --brute output/linux-amd64/FonFon
