@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"sync"
 
 	"github.com/wsxiaoys/terminal"
 	"golang.org/x/sync/semaphore"
@@ -14,11 +15,14 @@ var (
 	ctx       = context.TODO()
 	writing   = semaphore.NewWeighted(1)
 	free      = true
+	mapMutex  = sync.Mutex{}
 )
 
 func Add(initstatus string, givenname string) int {
+	mapMutex.Lock()
 	status = append(status, initstatus)
 	name = append(name, givenname)
+	mapMutex.Unlock()
 	if maxlength < len(givenname) {
 		maxlength = len(givenname)
 	}
@@ -29,7 +33,9 @@ func Add(initstatus string, givenname string) int {
 }
 
 func Update(id int, newstatus string) {
+	mapMutex.Lock()
 	status[id] = newstatus
+	mapMutex.Unlock()
 	show()
 }
 
@@ -38,21 +44,25 @@ func show() {
 		return
 	}
 	defer writing.Release(1)
+	mapMutex.Lock()
+	localName := name
+	localStat := status
+	mapMutex.Unlock()
 
 	if !free {
-		terminal.Stdout.Up(len(name))
+		terminal.Stdout.Up(len(localName))
 	} else {
 		free = false
 		terminal.Stdout.Nl(2)
 	}
 
-	for i := 0; i < len(name); i++ {
-		dotc := maxlength - len(name[i])
+	for i := 0; i < len(localName); i++ {
+		dotc := maxlength - len(localName[i])
 		dots := "..."
 		for j := 0; j < dotc; j++ {
 			dots += "."
 		}
-		terminal.Stdout.ClearLine().Colorf(name[i] + dots + status[i]).Nl().Left(len(name[i] + dots + status[i]))
+		terminal.Stdout.ClearLine().Colorf(localName[i] + dots + localStat[i]).Nl().Left(len(localName[i] + dots + localStat[i]))
 	}
 
 }
