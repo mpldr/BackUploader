@@ -33,10 +33,24 @@ var (
 	Packing   = semaphore.NewWeighted(0)
 	Paring    = semaphore.NewWeighted(0)
 	Uploading = semaphore.NewWeighted(0)
+	// additional Parameters
+	PwdLength      = 5
+	LogToFile      = ""
+	DebugEnabled   = false
+	LogFileHandler = os.Stderr
 )
 
-func init() {
-	log.SetOutput(os.Stderr)
+func Initialize() {
+	if DebugEnabled {
+		if LogToFile != "" {
+			lfh, err := os.OpenFile(LogToFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+			if err != nil {
+				panic(err)
+			}
+			LogFileHandler = lfh
+		}
+		log.SetOutput(LogFileHandler)
+	}
 }
 
 const PATH_SEPARATOR = string(os.PathSeparator)
@@ -50,9 +64,9 @@ func Start(folder string, displayId int, wg *sync.WaitGroup) {
 		return
 	}
 	replacevalues := [4]string{cpath + PATH_SEPARATOR + ".up",
-		GenPwd(),
+		GenPwd(PwdLength),
 		folder,
-		SuccPath}
+		SuccPath + PATH_SEPARATOR}
 	// move out
 	if err := os.Rename(cpath, Path+PATH_SEPARATOR+"._"+folder); err != nil {
 		failed(cpath, folder, displayId, err)
@@ -113,6 +127,9 @@ func Start(folder string, displayId int, wg *sync.WaitGroup) {
 func packing(folder string, values [4]string) bool {
 	defer Packing.Release(1)
 	packcommand := replace(PackCmd, values)
+	if DebugEnabled {
+		log.Println("Executing Command: ", Executor, ExecOpt, packcommand, "\n\tCurrent Working Directory: ", folder)
+	}
 	cmd := exec.Command(Executor, ExecOpt, packcommand)
 	cmd.Dir = folder + PATH_SEPARATOR + ".tmp"
 
@@ -123,6 +140,7 @@ func packing(folder string, values [4]string) bool {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if _, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
 				return false
 			}
 		} else {
@@ -130,12 +148,16 @@ func packing(folder string, values [4]string) bool {
 		}
 	}
 
+	log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
 	return true
 }
 
 func paring(folder string, values [4]string) bool {
 	defer Paring.Release(1)
 	packcommand := replace(ParCmd, values)
+	if DebugEnabled {
+		log.Println("Executing Command: ", Executor, ExecOpt, packcommand, "\n\tCurrent Working Directory: ", folder)
+	}
 	cmd := exec.Command(Executor, ExecOpt, packcommand)
 	cmd.Dir = folder + PATH_SEPARATOR + ".up"
 
@@ -146,6 +168,7 @@ func paring(folder string, values [4]string) bool {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if _, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
 				return false
 			}
 		} else {
@@ -153,12 +176,16 @@ func paring(folder string, values [4]string) bool {
 		}
 	}
 
+	log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
 	return true
 }
 
 func uploading(folder string, values [4]string) bool {
 	defer Uploading.Release(1)
 	packcommand := replace(UpldCmd, values)
+	if DebugEnabled {
+		log.Println("Executing Command: ", Executor, ExecOpt, packcommand, "\n\tCurrent Working Directory: ", folder)
+	}
 	cmd := exec.Command(Executor, ExecOpt, packcommand)
 	cmd.Dir = folder + PATH_SEPARATOR + ".up"
 
@@ -169,6 +196,7 @@ func uploading(folder string, values [4]string) bool {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if _, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
 				return false
 			}
 		} else {
@@ -176,6 +204,7 @@ func uploading(folder string, values [4]string) bool {
 		}
 	}
 
+	log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
 	return true
 }
 
