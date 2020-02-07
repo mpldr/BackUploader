@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"log"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"sync"
 	"syscall"
 
-	"../display"
+	"github.com/poldi1405/BackUploader/display"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -55,12 +56,12 @@ func Initialize() {
 
 const PATH_SEPARATOR = string(os.PathSeparator)
 
-func Start(folder string, displayId int, wg *sync.WaitGroup) {
+func Start(folder string, displayId int, DC *display.DisplayController, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer Running.Release(1)
 	cpath, err := filepath.Abs(Path + PATH_SEPARATOR + folder)
 	if err != nil {
-		display.Update(displayId, "@{!r}FAILED1!")
+		DC.Update(displayId, "@{!r}FAILED1!")
 		return
 	}
 	replacevalues := [4]string{cpath + PATH_SEPARATOR + ".up",
@@ -69,58 +70,59 @@ func Start(folder string, displayId int, wg *sync.WaitGroup) {
 		SuccPath + PATH_SEPARATOR}
 	// move out
 	if err := os.Rename(cpath, Path+PATH_SEPARATOR+"._"+folder); err != nil {
-		failed(cpath, folder, displayId, err)
+		failed(cpath, folder, displayId, DC, err)
 		return
 	}
 	// recreate folder
 	if err := os.Mkdir(cpath, os.ModePerm); err != nil {
-		failed(cpath, folder, displayId, err)
+		failed(cpath, folder, displayId, DC, err)
 	}
 	// create upload folder
 	if err := os.Mkdir(cpath+PATH_SEPARATOR+".up", os.ModePerm); err != nil {
-		failed(cpath, folder, displayId, err)
+		failed(cpath, folder, displayId, DC, err)
 	}
 	// move to temporary folder
 	if err := os.Rename(Path+PATH_SEPARATOR+"._"+folder, cpath+PATH_SEPARATOR+".tmp"); err != nil {
-		failed(cpath, folder, displayId, err)
+		failed(cpath, folder, displayId, DC, err)
 		return
 	}
 
 	// start packing
 	Packing.Acquire(Contxt, 1)
-	display.Update(displayId, "packing")
+	DC.Update(displayId, "packing")
 	if packing(cpath, replacevalues) {
-		display.Update(displayId, "idle")
+		DC.Update(displayId, "waiting for parity creation")
 	} else {
-		failed(cpath, folder, displayId, nil)
+		failed(cpath, folder, displayId, DC, nil)
 		return
 	}
 
 	// start creating parity
 	Paring.Acquire(Contxt, 1)
-	display.Update(displayId, "creating parity")
-	if paring(cpath, replacevalues) {
-		display.Update(displayId, "idle")
+	DC.Update(displayId, "paringg")
+	if paring(cpath, replacevalues, displayId, DC) {
+		DC.Update(displayId, "waiting for upload")
 	} else {
-		failed(cpath, folder, displayId, nil)
+		failed(cpath, folder, displayId, DC, nil)
 		return
 	}
 
 	// start uploading files
 	Uploading.Acquire(Contxt, 1)
-	display.Update(displayId, "uploading")
+	DC.Update(displayId, "uploading")
 	if uploading(cpath, replacevalues) {
-		display.Update(displayId, "@{!g}FINISHED!")
+		DC.Update(displayId, "@{!g}FINISHED!")
 	} else {
-		failed(cpath, folder, displayId, nil)
+		failed(cpath, folder, displayId, DC, nil)
 	}
 
 	if err := os.Rename(cpath+PATH_SEPARATOR+".tmp", SuccPath+PATH_SEPARATOR+folder); err != nil {
-		display.Update(displayId, "@{!y}UNABLE TO MOVE TO SUCCESS DIRECTORY!")
+		DC.Update(displayId, "@{!y}UNABLE TO MOVE TO SUCCESS DIRECTORY!")
+		return
 	}
 
 	if err := os.RemoveAll(cpath); err != nil {
-		display.Update(displayId, "@{!y}UNABLE TO CLEAN UP DIRECTORY!")
+		DC.Update(displayId, "@{!y}UNABLE TO CLEAN UP DIRECTORY!")
 	}
 }
 
@@ -156,7 +158,7 @@ func packing(folder string, values [4]string) bool {
 	return true
 }
 
-func paring(folder string, values [4]string) bool {
+func paring(folder string, values [4]string, displayId int, DC *display.DisplayController) bool {
 	defer Paring.Release(1)
 	packcommand := replace(ParCmd, values)
 	if DebugEnabled {
@@ -164,6 +166,11 @@ func paring(folder string, values [4]string) bool {
 	}
 	cmd := exec.Command(Executor, ExecOpt, packcommand)
 	cmd.Dir = folder + PATH_SEPARATOR + ".up"
+	sout := &bytes.Buffer{}
+	serr := &bytes.Buffer{}
+	cmd.Stdout = sout
+	cmd.Stderr = serr
+	go percentage(sout, serr, displayId, DC, "creating parity")
 
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
@@ -220,13 +227,13 @@ func uploading(folder string, values [4]string) bool {
 	return true
 }
 
-func failed(path string, folder string, displayId int, err error) {
-	display.Update(displayId, "@{!r}FAILED!")
+func failed(path string, folder string, displayId int, DC *display.DisplayController, err error) {
+	DC.Update(displayId, "@{!r}FAILED!")
 	if err != nil {
 		log.Print(err)
 	}
 	if err := os.Rename(path, FailPath+PATH_SEPARATOR+folder); err != nil {
-		display.Update(displayId, "@{!r^}UNABLE TO MOVE TO FAILED FOLDER!")
+		DC.Update(displayId, "@{!r^}UNABLE TO MOVE TO FAILED FOLDER!")
 		log.Fatal(err)
 	}
 }

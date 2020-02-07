@@ -6,9 +6,9 @@ import (
 	"os"
 	"sync"
 
-	"./controller"
-	"./display"
 	"github.com/bigkevmcd/go-configparser"
+	"github.com/poldi1405/BackUploader/controller"
+	"github.com/poldi1405/BackUploader/display"
 	"github.com/wsxiaoys/terminal/color"
 	"golang.org/x/sync/semaphore"
 )
@@ -199,10 +199,11 @@ func main() {
 	controller.PwdLength = int(setpwdlength)
 	controller.Path = path
 
+	DC := &display.DisplayController{}
 	for _, nextdir := range dirs {
 		controller.Running.Acquire(controller.Contxt, 1)
-		displayId := display.Add("@{y}idle", nextdir)
-		go controller.Start(nextdir, displayId, &Wg)
+		displayId := DC.Add("@{y}idle", nextdir)
+		go controller.Start(nextdir, displayId, DC, &Wg)
 		Wg.Add(1)
 	}
 	Wg.Wait()

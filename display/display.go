@@ -5,59 +5,58 @@ import (
 	"sync"
 
 	"github.com/wsxiaoys/terminal"
-	"golang.org/x/sync/semaphore"
 )
 
-var (
-	status    = make([]string, 0)
-	name      = make([]string, 0)
-	maxlength = -1
-	ctx       = context.TODO()
-	writing   = semaphore.NewWeighted(1)
-	free      = true
-	mapMutex  = sync.Mutex{}
-)
+type DisplayController struct {
+	status    []string
+	name      []string
+	maxlength int
+	ctx       context.Context
+	writing   sync.Mutex
+	free      bool
+	mapMutex  sync.Mutex
+}
 
-func Add(initstatus string, givenname string) int {
-	mapMutex.Lock()
-	status = append(status, initstatus)
-	name = append(name, givenname)
-	mapMutex.Unlock()
-	if maxlength < len(givenname) {
-		maxlength = len(givenname)
+func (dc *DisplayController) Add(initstatus string, givenname string) int {
+	dc.mapMutex.Lock()
+	dc.status = append(dc.status, initstatus)
+	dc.name = append(dc.name, givenname)
+	dc.mapMutex.Unlock()
+	if dc.maxlength < len(givenname) {
+		dc.maxlength = len(givenname)
 	}
-	if !free {
+	if !dc.free {
 		terminal.Stdout.Nl(1)
 	}
-	return len(name) - 1
+	return len(dc.name) - 1
 }
 
-func Update(id int, newstatus string) {
-	mapMutex.Lock()
-	status[id] = newstatus
-	mapMutex.Unlock()
-	show()
+func (dc *DisplayController) Update(id int, newstatus string) {
+	dc.mapMutex.Lock()
+	dc.status[id] = newstatus
+	dc.mapMutex.Unlock()
+	dc.show()
 }
 
-func show() {
-	if err := writing.Acquire(ctx, 1); err != nil {
-		return
-	}
-	defer writing.Release(1)
-	mapMutex.Lock()
-	localName := name
-	localStat := status
-	mapMutex.Unlock()
+func (dc *DisplayController) show() {
+	dc.writing.Lock()
+	defer dc.writing.Unlock()
 
-	if !free {
+	dc.mapMutex.Lock()
+	localName := dc.name
+	localStat := dc.status
+	maxl := dc.maxlength
+	dc.mapMutex.Unlock()
+
+	if !dc.free {
 		terminal.Stdout.Up(len(localName))
 	} else {
-		free = false
+		dc.free = false
 		terminal.Stdout.Nl(2)
 	}
 
 	for i := 0; i < len(localName); i++ {
-		dotc := maxlength - len(localName[i])
+		dotc := maxl - len(localName[i])
 		dots := "..."
 		for j := 0; j < dotc; j++ {
 			dots += "."
