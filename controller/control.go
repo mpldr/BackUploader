@@ -90,7 +90,7 @@ func Start(folder string, displayId int, DC *display.DisplayController, wg *sync
 	// start packing
 	Packing.Acquire(Contxt, 1)
 	DC.Update(displayId, "packing")
-	if packing(cpath, replacevalues) {
+	if packing(cpath, replacevalues, displayId, DC) {
 		DC.Update(displayId, "waiting for parity creation")
 	} else {
 		failed(cpath, folder, displayId, DC, nil)
@@ -110,7 +110,7 @@ func Start(folder string, displayId int, DC *display.DisplayController, wg *sync
 	// start uploading files
 	Uploading.Acquire(Contxt, 1)
 	DC.Update(displayId, "uploading")
-	if uploading(cpath, replacevalues) {
+	if uploading(cpath, replacevalues, displayId, DC) {
 		DC.Update(displayId, "@{!g}FINISHED!")
 	} else {
 		failed(cpath, folder, displayId, DC, nil)
@@ -126,7 +126,7 @@ func Start(folder string, displayId int, DC *display.DisplayController, wg *sync
 	}
 }
 
-func packing(folder string, values [4]string) bool {
+func packing(folder string, values [4]string, displayId int, DC *display.DisplayController) bool {
 	defer Packing.Release(1)
 	packcommand := replace(PackCmd, values)
 	if DebugEnabled {
@@ -134,6 +134,12 @@ func packing(folder string, values [4]string) bool {
 	}
 	cmd := exec.Command(Executor, ExecOpt, packcommand)
 	cmd.Dir = folder + PATH_SEPARATOR + ".tmp"
+	sout := &bytes.Buffer{}
+	serr := &bytes.Buffer{}
+	cmd.Stdout = sout
+	cmd.Stderr = serr
+	running := make(chan bool)
+	go percentage(sout, serr, displayId, DC, "packing files", running)
 
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
@@ -145,6 +151,7 @@ func packing(folder string, values [4]string) bool {
 				if DebugEnabled {
 					log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
 				}
+				close(running)
 				return false
 			}
 		} else {
@@ -155,6 +162,7 @@ func packing(folder string, values [4]string) bool {
 	if DebugEnabled {
 		log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
 	}
+	close(running)
 	return true
 }
 
@@ -170,7 +178,8 @@ func paring(folder string, values [4]string, displayId int, DC *display.DisplayC
 	serr := &bytes.Buffer{}
 	cmd.Stdout = sout
 	cmd.Stderr = serr
-	go percentage(sout, serr, displayId, DC, "creating parity")
+	running := make(chan bool)
+	go percentage(sout, serr, displayId, DC, "creating parity", running)
 
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
@@ -182,6 +191,7 @@ func paring(folder string, values [4]string, displayId int, DC *display.DisplayC
 				if DebugEnabled {
 					log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
 				}
+				close(running)
 				return false
 			}
 		} else {
@@ -192,10 +202,11 @@ func paring(folder string, values [4]string, displayId int, DC *display.DisplayC
 	if DebugEnabled {
 		log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
 	}
+	close(running)
 	return true
 }
 
-func uploading(folder string, values [4]string) bool {
+func uploading(folder string, values [4]string, displayId int, DC *display.DisplayController) bool {
 	defer Uploading.Release(1)
 	packcommand := replace(UpldCmd, values)
 	if DebugEnabled {
@@ -203,6 +214,12 @@ func uploading(folder string, values [4]string) bool {
 	}
 	cmd := exec.Command(Executor, ExecOpt, packcommand)
 	cmd.Dir = folder + PATH_SEPARATOR + ".up"
+	sout := &bytes.Buffer{}
+	serr := &bytes.Buffer{}
+	cmd.Stdout = sout
+	cmd.Stderr = serr
+	running := make(chan bool)
+	go percentage(sout, serr, displayId, DC, "uploading files", running)
 
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
@@ -214,6 +231,7 @@ func uploading(folder string, values [4]string) bool {
 				if DebugEnabled {
 					log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "failed")
 				}
+				close(running)
 				return false
 			}
 		} else {
@@ -224,6 +242,7 @@ func uploading(folder string, values [4]string) bool {
 	if DebugEnabled {
 		log.Println("Command: ", Executor, ExecOpt, packcommand, "\n\tin: ", folder, "successful")
 	}
+	close(running)
 	return true
 }
 

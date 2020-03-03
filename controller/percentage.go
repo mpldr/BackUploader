@@ -12,8 +12,10 @@ var (
 	percentageRegEx = regexp.MustCompile(`(?P<perc>[0-9.,]+) ?\%`)
 )
 
-func percentage(stdout, stderr *bytes.Buffer, displayId int, DC *display.DisplayController, action string) {
-	for {
+func percentage(stdout, stderr *bytes.Buffer, displayId int, DC *display.DisplayController, action string, cont chan bool) {
+	_, running := <-cont
+	for running {
+
 		stout := stdout.Bytes()
 		sterr := stderr.Bytes()
 		resultOut := percentageRegEx.FindAllStringSubmatch(string(stout), -1)
@@ -30,5 +32,10 @@ func percentage(stdout, stderr *bytes.Buffer, displayId int, DC *display.Display
 			DC.Update(displayId, action+" "+perc+"%")
 		}
 		time.Sleep(500 * time.Millisecond)
+		select {
+		case <-cont:
+		default:
+			running = true
+		}
 	}
 }
