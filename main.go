@@ -6,11 +6,11 @@ import (
 	"os"
 	"sync"
 
-	"./controller"
-	"./display"
 	"github.com/bigkevmcd/go-configparser"
 	"github.com/wsxiaoys/terminal/color"
 	"golang.org/x/sync/semaphore"
+	"mpldr.codes/backuploader/controller"
+	"mpldr.codes/backuploader/display"
 )
 
 var (
@@ -174,7 +174,7 @@ func main() {
 	}
 	color.Println("@{g}DONE@{|}")
 
-	var dirs = make([]string, 0)
+	dirs := make([]string, 0)
 	for _, dir := range subdirs {
 		if dir.IsDir() {
 			dirs = append(dirs, dir.Name())
@@ -187,7 +187,7 @@ func main() {
 		return
 	}
 
-	//TODO: Context controller
+	// TODO: Context controller
 	fmt.Println("a maximum of", setclimit, "jobs is performed at a time")
 	controller.Running = semaphore.NewWeighted(setclimit)
 	fmt.Println("a maximum of", setpclimit, "jobs is packed at a time")

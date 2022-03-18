@@ -11,8 +11,8 @@ import (
 	"sync"
 	"syscall"
 
-	"../display"
 	"golang.org/x/sync/semaphore"
+	"mpldr.codes/backuploader/display"
 )
 
 var (
@@ -43,7 +43,7 @@ var (
 func Initialize() {
 	if DebugEnabled {
 		if LogToFile != "" {
-			lfh, err := os.OpenFile(LogToFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+			lfh, err := os.OpenFile(LogToFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o600)
 			if err != nil {
 				panic(err)
 			}
@@ -63,10 +63,12 @@ func Start(folder string, displayId int, wg *sync.WaitGroup) {
 		display.Update(displayId, "@{!r}FAILED1!")
 		return
 	}
-	replacevalues := [4]string{cpath + PATH_SEPARATOR + ".up",
+	replacevalues := [4]string{
+		cpath + PATH_SEPARATOR + ".up",
 		GenPwd(PwdLength),
 		folder,
-		SuccPath + PATH_SEPARATOR}
+		SuccPath + PATH_SEPARATOR,
+	}
 	// move out
 	if err := os.Rename(cpath, Path+PATH_SEPARATOR+"._"+folder); err != nil {
 		failed(cpath, folder, displayId, err)
